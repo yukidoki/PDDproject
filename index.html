@@ -20,19 +20,15 @@
 
         /* --- 背景与全局布局 --- */
         body { 
-            /* 更换为韩小韩二次元随机壁纸 API，速度较快且稳定 */
             background: url('https://wmimg.com/i/37/2025/11/692565dea2d57.jpg') no-repeat center center fixed; 
-            /* 备用背景色，防止图片加载慢时白屏 */
             background-color: #a3b6ee;
             background-size: cover;
             font-family: "Segoe UI", "Microsoft YaHei", sans-serif; 
             color: #444;
             min-height: 100vh;
-            /* 防止整个网页出现不必要的滚动条，主要靠内部容器滚动 */
             overflow-y: hidden; 
         }
 
-        /* 让主容器可以滚动，适应小屏幕 */
         .main-scroller {
             height: 100vh;
             overflow-y: auto;
@@ -47,7 +43,6 @@
             border-radius: var(--card-border-radius); 
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             margin-bottom: 25px;
-            /* 半透明白色背景 + 高斯模糊 */
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(10px); 
             -webkit-backdrop-filter: blur(10px);
@@ -55,7 +50,6 @@
         }
 
         .header-section {
-            /* 渐变色稍作调整以配合背景 */
             background: linear-gradient(135deg, rgba(78, 115, 223, 0.9) 0%, rgba(34, 74, 190, 0.9) 100%);
             color: white;
             padding: 20px;
@@ -81,16 +75,25 @@
             transition: all 0.3s;
             position: relative;
         }
+        /* 拖拽激活样式 */
+        .upload-zone.active {
+            border-color: var(--brand-color);
+            background-color: rgba(255, 255, 255, 0.9);
+            transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(78, 115, 223, 0.3);
+        }
         .upload-zone:hover {
             border-color: var(--brand-color);
             background-color: rgba(255, 255, 255, 0.8);
-            transform: scale(1.02);
         }
         .upload-zone i { font-size: 2.5rem; color: #4e73df; margin-bottom: 10px; }
         .upload-zone p { margin: 0; font-weight: 600; color: #5a5c69; }
-        #folderInput {
+        
+        /* 关键修改：Input 仍然覆盖，但主要用于点击 */
+        #fileInput {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             opacity: 0; cursor: pointer;
+            z-index: 2; /* 确保在最上层响应点击 */
         }
 
         /* --- 按钮美化 --- */
@@ -104,15 +107,13 @@
         .btn-success-custom { background-color: #1cc88a; border: none; color: white; }
         .btn-success-custom:hover:not(:disabled) { background-color: #17a673; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(28, 200, 138, 0.4); }
 
-        /* --- 独立滚动表格关键样式 (Fixed Scroll) --- */
+        /* --- 表格样式 --- */
         .table-container { 
             border-radius: 8px; 
             border: 1px solid #e3e6f0;
-            /* 关键：设置固定高度，实现局部滚动 */
             height: 65vh; 
             overflow-y: auto; 
             background-color: rgba(255, 255, 255, 0.95);
-            /* 优化滚动条样式 */
             scrollbar-width: thin;
             scrollbar-color: #b7b9cc #f8f9fc;
         }
@@ -122,7 +123,6 @@
         .table-container::-webkit-scrollbar-thumb { background-color: #b7b9cc; border-radius: 4px; }
         
         .table thead th {
-            /* 关键：表头吸附 */
             position: sticky; 
             top: 0; 
             background-color: #f1f3f9; 
@@ -184,17 +184,25 @@
                 <div class="card">
                     <div class="card-body">
                         <h6 class="filter-label"><i class="bi bi-folder2-open me-1"></i>数据导入</h6>
+                        
+                        <!-- 修改后的上传区域 -->
                         <div class="upload-zone shadow-sm" id="dropZone">
-                            <input type="file" id="folderInput" webkitdirectory directory multiple>
+                            <!-- 
+                                关键修改：
+                                1. 移除了 webkitdirectory 和 directory 属性
+                                2. 添加了 accept=".csv"
+                                3. ID 改为 fileInput 以示区别（JS中对应修改）
+                            -->
+                            <input type="file" id="fileInput" multiple accept=".csv">
                             <i class="bi bi-cloud-arrow-up-fill"></i>
-                            <p id="fileLabel">点击或拖拽文件夹到此处</p>
-                            <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">支持批量 CSV 文件</small>
+                            <p id="fileLabel">点击或将CSV文件拖拽至此</p>
+                            <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">支持单文件或多文件批量上传</small>
                         </div>
                         
                         <div class="mt-4">
                             <div class="d-grid gap-2">
                                 <button id="btnAnalyze" class="btn btn-custom btn-primary-custom" disabled>
-                                    <i class="bi bi-lightning-charge-fill"></i> 开始智能分析
+                                    <i class="bi bi-lightning-charge-fill"></i> 开始分析
                                 </button>
                                 <button id="btnExport" class="btn btn-custom btn-success-custom" disabled>
                                     <i class="bi bi-file-earmark-excel-fill"></i> 导出分析报表
@@ -374,7 +382,8 @@
 
     // UI 引用
     const els = {
-        folderInput: document.getElementById('folderInput'),
+        fileInput: document.getElementById('fileInput'),
+        dropZone: document.getElementById('dropZone'), // 新增引用
         fileLabel: document.getElementById('fileLabel'),
         btnAnalyze: document.getElementById('btnAnalyze'),
         btnExport: document.getElementById('btnExport'),
@@ -392,9 +401,11 @@
         filterStatusText: document.getElementById('filterStatusText')
     };
 
-    // 事件监听
-    els.folderInput.addEventListener('change', (e) => {
-        selectedFiles = Array.from(e.target.files).filter(f => f.name.toLowerCase().endsWith('.csv'));
+    // --- 文件处理核心逻辑 (新增函数) ---
+    function handleFileSelection(fileList) {
+        // 过滤非 CSV 文件
+        selectedFiles = Array.from(fileList).filter(f => f.name.toLowerCase().endsWith('.csv'));
+        
         if (selectedFiles.length > 0) {
             els.btnAnalyze.disabled = false;
             els.fileLabel.innerHTML = `<strong>已就绪!</strong> 选中 ${selectedFiles.length} 个 CSV 文件`;
@@ -403,10 +414,47 @@
             updateProgress(0, `准备分析 ${selectedFiles.length} 个文件`);
         } else {
             els.btnAnalyze.disabled = true;
-            els.fileLabel.innerHTML = "未在文件夹中找到 CSV 文件，请重新选择";
+            els.fileLabel.innerHTML = "未检测到有效的 CSV 文件，请重新选择";
             els.fileLabel.classList.remove('text-primary');
         }
+    }
+
+    // --- 事件监听 修改部分 ---
+
+    // 1. 点击选择文件
+    els.fileInput.addEventListener('change', (e) => {
+        handleFileSelection(e.target.files);
     });
+
+    // 2. 拖拽支持 (Drag & Drop)
+    // 阻止浏览器默认打开文件的行为
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        els.dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // 拖拽进入/离开时的视觉反馈
+    ['dragenter', 'dragover'].forEach(eventName => {
+        els.dropZone.addEventListener(eventName, () => els.dropZone.classList.add('active'), false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+        els.dropZone.addEventListener(eventName, () => els.dropZone.classList.remove('active'), false);
+    });
+
+    // 处理文件放置
+    els.dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFileSelection(files);
+        
+        // 兼容处理：如果是文件输入框本身的change事件没触发，这里手动赋值有点复杂
+        // 所以我们主要依赖 selectedFiles 这个变量来存储，而不是 input.files
+    }, false);
+
 
     els.btnAnalyze.addEventListener('click', startAnalysis);
     els.btnApplyFilter.addEventListener('click', applyFilters);
