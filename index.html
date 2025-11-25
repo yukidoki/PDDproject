@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>店铺数据分析</title>
+    
+    <!-- 1. 国内高速源加载 CSS -->
+    <link href="https://cdn.staticfile.org/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入图标库 -->
+    <link href="https://cdn.staticfile.org/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-bg: #f3f5f9;
+            --card-border-radius: 12px;
+            --brand-color: #4e73df;
+            --brand-hover: #2e59d9;
+        }
+
+        /* --- 背景与全局布局 --- */
+        body { 
+            /* 更换为韩小韩二次元随机壁纸 API，速度较快且稳定 */
+            background: url('https://wmimg.com/i/37/2025/11/692565dea2d57.jpg') no-repeat center center fixed; 
+            /* 备用背景色，防止图片加载慢时白屏 */
+            background-color: #a3b6ee;
+            background-size: cover;
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif; 
+            color: #444;
+            min-height: 100vh;
+            /* 防止整个网页出现不必要的滚动条，主要靠内部容器滚动 */
+            overflow-y: hidden; 
+        }
+
+        /* 让主容器可以滚动，适应小屏幕 */
+        .main-scroller {
+            height: 100vh;
+            overflow-y: auto;
+            padding: 25px;
+        }
+
+        .container-fluid { max-width: 1600px; padding: 0; }
+
+        /* --- 毛玻璃卡片风格 --- */
+        .card { 
+            border: none; 
+            border-radius: var(--card-border-radius); 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            margin-bottom: 25px;
+            /* 半透明白色背景 + 高斯模糊 */
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px); 
+            -webkit-backdrop-filter: blur(10px);
+            transition: transform 0.2s;
+        }
+
+        .header-section {
+            /* 渐变色稍作调整以配合背景 */
+            background: linear-gradient(135deg, rgba(78, 115, 223, 0.9) 0%, rgba(34, 74, 190, 0.9) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: var(--card-border-radius);
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-title h2 { margin: 0; font-weight: 700; font-size: 1.5rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+        .header-title p { margin: 5px 0 0; opacity: 0.9; font-size: 0.9rem; }
+
+        /* --- 文件上传区域 --- */
+        .upload-zone {
+            border: 2px dashed #99aaff;
+            border-radius: var(--card-border-radius);
+            padding: 30px;
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .upload-zone:hover {
+            border-color: var(--brand-color);
+            background-color: rgba(255, 255, 255, 0.8);
+            transform: scale(1.02);
+        }
+        .upload-zone i { font-size: 2.5rem; color: #4e73df; margin-bottom: 10px; }
+        .upload-zone p { margin: 0; font-weight: 600; color: #5a5c69; }
+        #folderInput {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0; cursor: pointer;
+        }
+
+        /* --- 按钮美化 --- */
+        .btn-custom {
+            border-radius: 8px; padding: 10px 20px; font-weight: 600;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all 0.3s;
+        }
+        .btn-primary-custom { background-color: var(--brand-color); border: none; color: white; }
+        .btn-primary-custom:hover:not(:disabled) { background-color: var(--brand-hover); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(78, 115, 223, 0.4); }
+        .btn-success-custom { background-color: #1cc88a; border: none; color: white; }
+        .btn-success-custom:hover:not(:disabled) { background-color: #17a673; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(28, 200, 138, 0.4); }
+
+        /* --- 独立滚动表格关键样式 (Fixed Scroll) --- */
+        .table-container { 
+            border-radius: 8px; 
+            border: 1px solid #e3e6f0;
+            /* 关键：设置固定高度，实现局部滚动 */
+            height: 65vh; 
+            overflow-y: auto; 
+            background-color: rgba(255, 255, 255, 0.95);
+            /* 优化滚动条样式 */
+            scrollbar-width: thin;
+            scrollbar-color: #b7b9cc #f8f9fc;
+        }
+        
+        .table-container::-webkit-scrollbar { width: 8px; height: 8px; }
+        .table-container::-webkit-scrollbar-track { background: #f8f9fc; }
+        .table-container::-webkit-scrollbar-thumb { background-color: #b7b9cc; border-radius: 4px; }
+        
+        .table thead th {
+            /* 关键：表头吸附 */
+            position: sticky; 
+            top: 0; 
+            background-color: #f1f3f9; 
+            color: #4e73df;
+            z-index: 10;
+            font-weight: 700;
+            border-bottom: 2px solid #d1d3e2;
+            vertical-align: middle;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .table tbody td { padding: 12px 15px; vertical-align: middle; border-color: #e3e6f0; font-size: 0.9rem; }
+        .table-hover tbody tr:hover { background-color: rgba(78, 115, 223, 0.1); }
+
+        /* --- 其他组件 --- */
+        .filter-label { font-size: 0.85rem; font-weight: 700; color: #666; margin-bottom: 5px; display: block; }
+        .input-group-text { background-color: rgba(248, 249, 252, 0.8); }
+        
+        .badge-soft-danger { background-color: #ffeaea; color: #e74a3b; border: 1px solid #ffc5c5; }
+        .badge-soft-warning { background-color: #fff8e1; color: #f6c23e; border: 1px solid #ffeeba; }
+        .badge-soft-primary { background-color: #e8f0fe; color: #4e73df; border: 1px solid #b7cefc; }
+        
+        .progress { height: 10px; border-radius: 5px; background-color: #eaecf4; }
+        .progress-bar { background-color: var(--brand-color); border-radius: 5px; }
+
+        .nav-tabs { border-bottom: 2px solid #eaecf4; }
+        .nav-tabs .nav-link { color: #666; font-weight: 600; padding: 12px 20px; }
+        .nav-tabs .nav-link:hover { color: var(--brand-color); }
+        .nav-tabs .nav-link.active { color: var(--brand-color); border-bottom: 3px solid var(--brand-color); background: none; }
+
+        .input-mini { text-align: center; font-weight: 600; color: var(--brand-color); }
+        .log-time { color: #858796; font-family: monospace; }
+        #logTable { font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+<div class="main-scroller">
+    <div class="container-fluid">
+        
+        <!-- 顶部 Header -->
+        <div class="header-section">
+            <div class="header-title">
+                <h2><i class="bi bi-bar-chart-fill me-2"></i>店铺数据分析</h2>
+                <p>批量解析 CSV，智能识别高退货率商品</p>
+            </div>
+            <div>
+                <span class="badge bg-white text-primary p-2 shadow-sm" id="versionBadge"><i class="bi bi-magic me-1"></i>Web版</span>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- 左侧：控制与筛选 -->
+            <div class="col-lg-3">
+                <!-- 1. 文件上传卡片 -->
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="filter-label"><i class="bi bi-folder2-open me-1"></i>数据导入</h6>
+                        <div class="upload-zone shadow-sm" id="dropZone">
+                            <input type="file" id="folderInput" webkitdirectory directory multiple>
+                            <i class="bi bi-cloud-arrow-up-fill"></i>
+                            <p id="fileLabel">点击或拖拽文件夹到此处</p>
+                            <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">支持批量 CSV 文件</small>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <div class="d-grid gap-2">
+                                <button id="btnAnalyze" class="btn btn-custom btn-primary-custom" disabled>
+                                    <i class="bi bi-lightning-charge-fill"></i> 开始智能分析
+                                </button>
+                                <button id="btnExport" class="btn btn-custom btn-success-custom" disabled>
+                                    <i class="bi bi-file-earmark-excel-fill"></i> 导出分析报表
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 进度条 -->
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small class="text-muted fw-bold">处理进度</small>
+                                <small class="text-muted" id="progressPercent">0%</small>
+                            </div>
+                            <div class="progress">
+                                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <div id="progressText" class="text-center text-muted small mt-2 text-truncate">等待就绪...</div>
+                            <div id="resourceStatus" class="text-center small text-danger mt-1 fw-bold" style="display:none;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 筛选卡片 -->
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="filter-label"><i class="bi bi-funnel-fill me-1"></i>数据筛选</h6>
+                        
+                        <div class="mb-3">
+                            <label class="small text-muted mb-1">店铺选择</label>
+                            <select id="filterShop" class="form-select form-select-sm">
+                                <option value="all">所有店铺</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="small text-muted mb-1">退货率范围 (%)</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="filterRateMin" class="form-control input-mini" value="0" min="0" max="100">
+                                <span class="input-group-text border-start-0 border-end-0">-</span>
+                                <input type="number" id="filterRateMax" class="form-control input-mini" value="100" min="0" max="100">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="small text-muted mb-1">最小订单数</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text"><i class="bi bi-cart"></i></span>
+                                <input type="number" id="filterOrders" class="form-control" value="3" min="0">
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button id="btnApplyFilter" class="btn btn-sm btn-outline-primary fw-bold">
+                                <i class="bi bi-check-lg"></i> 应用筛选条件
+                            </button>
+                        </div>
+                        
+                        <div class="text-center mt-2">
+                            <small class="text-muted" id="filterStatusText" style="font-size: 0.75rem;">当前: 显示所有数据</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：数据展示 -->
+            <div class="col-lg-9">
+                <div class="card">
+                    <div class="card-body p-0">
+                        <ul class="nav nav-tabs px-3 pt-3" id="resultTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="shop-tab" data-bs-toggle="tab" data-bs-target="#shop-pane" type="button">
+                                    <i class="bi bi-shop me-1"></i>店铺统计
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="product-tab" data-bs-toggle="tab" data-bs-target="#product-pane" type="button">
+                                    <i class="bi bi-box-seam me-1"></i>商品明细
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="log-tab" data-bs-toggle="tab" data-bs-target="#log-pane" type="button">
+                                    <i class="bi bi-terminal me-1"></i>系统日志
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content p-4" id="myTabContent">
+                            <!-- 店铺统计表格 -->
+                            <div class="tab-pane fade show active" id="shop-pane">
+                                <div class="table-container">
+                                    <table class="table table-hover mb-0" id="shopTable">
+                                        <thead><tr><th>店铺名称</th><th class="text-center">退货取消率</th><th class="text-center">退货率</th><th class="text-center">取消率</th></tr></thead>
+                                        <tbody>
+                                            <tr><td colspan="4" class="text-center text-muted py-5">请先导入数据并开始分析</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- 商品明细表格 -->
+                            <div class="tab-pane fade" id="product-pane">
+                                <div class="table-container">
+                                    <table class="table table-hover mb-0" id="productTable">
+                                        <thead>
+                                            <tr>
+                                                <th>店铺名称</th>
+                                                <th class="text-center">商品ID</th>
+                                                <th>商品名称</th>
+                                                <th class="text-center">订单数</th>
+                                                <th class="text-center">退货数</th>
+                                                <th class="text-center">退货率</th>
+                                                <th class="text-center">风险标记</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td colspan="7" class="text-center text-muted py-5">暂无数据</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- 日志表格 -->
+                            <div class="tab-pane fade" id="log-pane">
+                                <div class="d-flex justify-content-end mb-2">
+                                    <button class="btn btn-sm btn-light border" onclick="clearLogs()"><i class="bi bi-trash"></i> 清空</button>
+                                </div>
+                                <div class="table-container" style="height: 400px;">
+                                    <table class="table table-sm table-striped mb-0" id="logTable">
+                                        <thead><tr><th style="width:120px">时间</th><th style="width:100px">状态</th><th>详情</th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 国内高速 CDN JS -->
+<script src="https://cdn.staticfile.org/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.staticfile.org/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.staticfile.org/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // 资源加载检查
+    window.addEventListener('load', function() {
+        const resourceStatus = document.getElementById('resourceStatus');
+        if (typeof XLSX === 'undefined' || typeof Papa === 'undefined') {
+            resourceStatus.style.display = 'block';
+            resourceStatus.innerText = "错误：核心组件加载失败，请尝试刷新页面。";
+        }
+    });
+
+    // 店铺ID映射表
+    const SHOP_MAPPING = {
+        "745895555": "拼多多AEMAPE启至专卖店", "554392391": "拼多多AEMAPE腾飞专卖店", "691704530": "拼多多Cebrodz潮服旗舰店",
+        "244850963": "拼多多Cebrodz潮流男装旗舰店", "255712752": "拼多多Cebrodz潮牌服饰旗舰店", "744414943": "拼多多Cebrodz服饰官方旗舰店",
+        "488511320": "拼多多CEBRODZ服饰配件官方旗舰店", "813210192": "拼多多Cebrodz服饰配件旗舰店", "426448634": "拼多多CEBRODZ服饰旗舰店",
+        "379750256": "拼多多CEBRODZ服饰箱包官方旗舰店", "277861842": "拼多多Cebrodz服饰箱包旗舰店", "577765909": "拼多多Cebrodz服饰鞋包旗舰店",
+        "740138844": "拼多多Cebrodz服装旗舰店", "344765445": "拼多多Cebrodz官方旗舰店", "633793584": "拼多多CEBRODZ男裤官方旗舰店",
+        "400219011": "拼多多CEBRODZ男裤旗舰店", "125787744": "拼多多Cebrodz男女装官方旗舰店", "935858177": "拼多多Cebrodz男士服饰官方旗舰店",
+        "575727700": "拼多多Cebrodz男士服饰旗舰店", "748706966": "拼多多Cebrodz男士服装旗舰店", "714460107": "拼多多Cebrodz男装官方旗舰店",
+        "458330942": "拼多多Cebrodz男装旗舰店", "855731719": "拼多多Cebrodz男子服装旗舰店", "901614017": "拼多多Cebrodz旗舰店",
+        "204109031": "拼多多Cebrodz鞋服官方旗舰店", "939438854": "拼多多CEBRODZ休闲服官方旗舰店", "839861575": "拼多多Cebrodz休闲服旗舰店",
+        "683945272": "拼多多Cebrodz休闲服饰旗舰店", "443645395": "拼多多Cebrodz休闲鞋服官方旗舰店", "816622949": "拼多多JEEP SPIRIT远飞双航专卖店",
+        "346680838": "拼多多TONY JEANS盛西专卖店"
+    };
+
+    // 数据存储
+    let globalShopResults = [];
+    let globalProductResults = []; 
+    let currentDisplayData = [];   
+    let selectedFiles = [];
+
+    // UI 引用
+    const els = {
+        folderInput: document.getElementById('folderInput'),
+        fileLabel: document.getElementById('fileLabel'),
+        btnAnalyze: document.getElementById('btnAnalyze'),
+        btnExport: document.getElementById('btnExport'),
+        progressBar: document.getElementById('progressBar'),
+        progressPercent: document.getElementById('progressPercent'),
+        progressText: document.getElementById('progressText'),
+        shopTableBody: document.querySelector('#shopTable tbody'),
+        productTableBody: document.querySelector('#productTable tbody'),
+        logTableBody: document.querySelector('#logTable tbody'),
+        filterShop: document.getElementById('filterShop'),
+        filterRateMin: document.getElementById('filterRateMin'),
+        filterRateMax: document.getElementById('filterRateMax'),
+        filterOrders: document.getElementById('filterOrders'),
+        btnApplyFilter: document.getElementById('btnApplyFilter'),
+        filterStatusText: document.getElementById('filterStatusText')
+    };
+
+    // 事件监听
+    els.folderInput.addEventListener('change', (e) => {
+        selectedFiles = Array.from(e.target.files).filter(f => f.name.toLowerCase().endsWith('.csv'));
+        if (selectedFiles.length > 0) {
+            els.btnAnalyze.disabled = false;
+            els.fileLabel.innerHTML = `<strong>已就绪!</strong> 选中 ${selectedFiles.length} 个 CSV 文件`;
+            els.fileLabel.classList.add('text-primary');
+            addLog('系统', '就绪', `已加载 ${selectedFiles.length} 个文件`);
+            updateProgress(0, `准备分析 ${selectedFiles.length} 个文件`);
+        } else {
+            els.btnAnalyze.disabled = true;
+            els.fileLabel.innerHTML = "未在文件夹中找到 CSV 文件，请重新选择";
+            els.fileLabel.classList.remove('text-primary');
+        }
+    });
+
+    els.btnAnalyze.addEventListener('click', startAnalysis);
+    els.btnApplyFilter.addEventListener('click', applyFilters);
+    els.btnExport.addEventListener('click', exportToExcel);
+
+    // 分析逻辑
+    async function startAnalysis() {
+        els.btnAnalyze.disabled = true;
+        els.btnExport.disabled = true;
+        
+        globalShopResults = [];
+        globalProductResults = [];
+        currentDisplayData = [];
+        els.shopTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-5"><div class="spinner-border text-primary"></div><div class="mt-2">正在分析数据...</div></td></tr>';
+        els.productTableBody.innerHTML = '';
+        
+        let processedCount = 0;
+        let errorCount = 0;
+
+        addLog('分析', '开始', '任务启动...');
+
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const file = selectedFiles[i];
+            const percent = Math.round(((i) / selectedFiles.length) * 100);
+            updateProgress(percent, `正在解析: ${file.name}`);
+
+            try {
+                const data = await parseCSV(file);
+                processFileData(file.name, data);
+                processedCount++;
+            } catch (err) {
+                console.error(err);
+                errorCount++;
+                addLog('错误', '读取失败', `${file.name}: ${err.message}`);
+            }
+        }
+
+        updateProgress(100, `处理完成! 成功 ${processedCount}, 失败 ${errorCount}`);
+        els.btnAnalyze.disabled = false;
+        els.btnExport.disabled = false;
+        
+        addLog('分析', '完成', `生成 ${globalShopResults.length} 条店铺记录`);
+
+        currentDisplayData = [...globalProductResults];
+        currentDisplayData.sort((a, b) => b.returnRate - a.returnRate);
+        
+        renderShopTable();
+        updateShopFilter();
+        renderProductTable();
+        
+        els.filterStatusText.innerText = `当前: 显示所有数据 (${currentDisplayData.length} 条)`;
+    }
+
+    // 筛选逻辑
+    function applyFilters() {
+        const filterShop = els.filterShop.value;
+        let minRate = parseFloat(els.filterRateMin.value) || 0;
+        let maxRate = parseFloat(els.filterRateMax.value) || 100;
+        const minThreshold = minRate / 100;
+        const maxThreshold = maxRate / 100;
+        let filterOrdersInput = parseInt(els.filterOrders.value) || 0;
+
+        currentDisplayData = globalProductResults.filter(p => {
+            if (filterShop !== 'all' && p.shopName !== filterShop) return false;
+            if (p.returnRate < minThreshold || p.returnRate > maxThreshold) return false;
+            if (p.totalOrders < filterOrdersInput) return false;
+            return true;
+        });
+
+        currentDisplayData.sort((a, b) => b.returnRate - a.returnRate);
+        renderProductTable();
+        
+        addLog('筛选', '应用', `退货率 ${minRate}-${maxRate}%, 订单≥${filterOrdersInput}, 结果: ${currentDisplayData.length} 条`);
+        els.filterStatusText.innerText = `当前: 筛选后数据 (${currentDisplayData.length} 条)`;
+        
+        const triggerEl = document.querySelector('#resultTabs button[data-bs-target="#product-pane"]');
+        bootstrap.Tab.getInstance(triggerEl).show();
+    }
+
+    // 导出 Excel
+    function exportToExcel() {
+        if (typeof XLSX === 'undefined') { alert("Excel组件未加载"); return; }
+        if (globalShopResults.length === 0 && currentDisplayData.length === 0) { alert("无数据可导出"); return; }
+
+        try {
+            const wb = XLSX.utils.book_new();
+
+            // 1. 店铺统计
+            const shopData = globalShopResults.map(s => ({
+                "店铺名称": s.shopName,
+                "退货取消率": s.returnCancelRate,
+                "退货率": s.returnRate,
+                "取消率": s.cancelRate
+            }));
+            shopData.sort((a, b) => b["退货率"] - a["退货率"]);
+            const wsShop = XLSX.utils.json_to_sheet(shopData);
+            
+            wsShop['!cols'] = [{wch: 35}, {wch: 15}, {wch: 15}, {wch: 15}];
+            formatPercentColumn(wsShop, [1, 2, 3]);
+            XLSX.utils.book_append_sheet(wb, wsShop, "店铺统计");
+
+            // 2. 商品明细
+            if (currentDisplayData.length === 0) {
+                addLog('导出', '跳过', '无商品明细数据');
+            } else {
+                const shopGroups = {};
+                currentDisplayData.forEach(p => {
+                    if (!shopGroups[p.shopName]) shopGroups[p.shopName] = [];
+                    shopGroups[p.shopName].push(p);
+                });
+
+                for (const [shopName, products] of Object.entries(shopGroups)) {
+                    products.sort((a, b) => b.returnRate - a.returnRate);
+                    
+                    const productData = products.map(p => ({
+                        "商品ID": p.productId,
+                        "商品名称": p.productName,
+                        "总订单数": p.totalOrders,
+                        "退货数": p.returnCount,
+                        "退货率": p.returnRate
+                    }));
+
+                    const wsProd = XLSX.utils.json_to_sheet(productData, { origin: "A2" });
+                    XLSX.utils.sheet_add_aoa(wsProd, [[shopName]], { origin: "A1" });
+                    if(!wsProd['!merges']) wsProd['!merges'] = [];
+                    wsProd['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } });
+                    wsProd['!cols'] = [{wch: 18}, {wch: 60}, {wch: 12}, {wch: 12}, {wch: 12}];
+                    formatPercentColumn(wsProd, [4], 2);
+
+                    let sheetName = shopName.replace(/[\\/*?:[\]]/g, '').substring(0, 31);
+                    if(wb.Sheets[sheetName]) sheetName = sheetName.substring(0,28) + Math.floor(Math.random()*100);
+                    XLSX.utils.book_append_sheet(wb, wsProd, sheetName);
+                }
+            }
+
+            const fileName = `数据分析报表_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            addLog('导出', '成功', `文件已下载: ${fileName}`);
+
+        } catch (e) {
+            console.error(e);
+            alert("导出异常: " + e.message);
+        }
+    }
+
+    function formatPercentColumn(ws, colIndices, startRowIndex = 1) {
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        for (let R = startRowIndex; R <= range.e.r; ++R) {
+            for (let i = 0; i < colIndices.length; ++i) {
+                const C = colIndices[i];
+                const cell_ref = XLSX.utils.encode_cell({r: R, c: C});
+                if (ws[cell_ref]) ws[cell_ref].z = '0.00%';
+            }
+        }
+    }
+
+    function parseCSV(file) {
+        return new Promise((resolve, reject) => {
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true, encoding: "GBK",
+                complete: function(results) {
+                    if (results.data && results.data.length > 0) {
+                        const cols = Object.keys(results.data[0]);
+                        const required = ['商家备注', '订单状态', '售后状态', '商品id'];
+                        const valid = required.every(req => cols.some(c => c.toLowerCase().includes(req.toLowerCase())));
+                        if (!valid && !file.retry) {
+                            file.retry = true;
+                            Papa.parse(file, { header: true, skipEmptyLines: true, encoding: "UTF-8", complete: r => resolve(r.data), error: e => reject(e) });
+                        } else if (!valid) {
+                            reject(new Error("格式不符或缺少关键列"));
+                        } else {
+                            resolve(results.data);
+                        }
+                    } else reject(new Error("空文件"));
+                },
+                error: e => reject(e)
+            });
+        });
+    }
+
+    function processFileData(filename, data) {
+        const shopId = filename.substring(0, 9);
+        const shopName = SHOP_MAPPING[shopId] || `未知店铺 (${shopId})`;
+
+        const validRows = data.filter(row => {
+            const note = (row['商家备注'] || '').toString().toLowerCase();
+            const status = (row['订单状态'] || '');
+            return !note.includes('as') && status !== '已取消';
+        });
+
+        if (validRows.length === 0) return;
+
+        const total = validRows.length;
+        const afterSale = validRows.filter(r => ['退款成功', '售后处理中'].includes(r['售后状态'])).length;
+        const canceled = validRows.filter(r => r['订单状态'] === '未发货，退款成功').length;
+
+        globalShopResults.push({
+            shopName,
+            returnCancelRate: total > 0 ? afterSale / total : 0,
+            returnRate: total > 0 ? (afterSale - canceled) / total : 0,
+            cancelRate: total > 0 ? canceled / total : 0
+        });
+
+        const prodMap = {};
+        validRows.forEach(r => {
+            const pid = (r['商品id'] || '').replace(/^'|'$/g, '');
+            if (!prodMap[pid]) prodMap[pid] = { pid, name: r['商品'] || '未知', total: 0, ret: 0 };
+            prodMap[pid].total++;
+            if (['退款成功', '售后处理中'].includes(r['售后状态'])) prodMap[pid].ret++;
+        });
+
+        Object.values(prodMap).forEach(p => {
+            if (p.total >= 1) {
+                globalProductResults.push({
+                    shopName, productId: p.pid, productName: p.name,
+                    totalOrders: p.total, returnCount: p.ret,
+                    returnRate: p.total > 0 ? p.ret / p.total : 0
+                });
+            }
+        });
+    }
+
+    function renderShopTable() {
+        const tbody = els.shopTableBody;
+        tbody.innerHTML = '';
+        if(globalShopResults.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-5">无有效数据</td></tr>';
+            return;
+        }
+
+        let sums = {rc:0, r:0, c:0};
+        globalShopResults.forEach(s => {
+            sums.rc += s.returnCancelRate; sums.r += s.returnRate; sums.c += s.cancelRate;
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold text-primary">${s.shopName}</td>
+                    <td class="text-center"><span class="badge ${getBadgeClass(s.returnCancelRate, 0.1)}">${toPercent(s.returnCancelRate)}</span></td>
+                    <td class="text-center"><span class="badge ${getBadgeClass(s.returnRate, 0.05)}">${toPercent(s.returnRate)}</span></td>
+                    <td class="text-center"><span class="badge ${getBadgeClass(s.cancelRate, 0.05, 'blue')}">${toPercent(s.cancelRate)}</span></td>
+                </tr>`;
+        });
+        
+        const avg = { rc: sums.rc/globalShopResults.length, r: sums.r/globalShopResults.length, c: sums.c/globalShopResults.length };
+        tbody.innerHTML += `<tr class="table-light fw-bold"><td>平均数据</td><td class="text-center">${toPercent(avg.rc)}</td><td class="text-center">${toPercent(avg.r)}</td><td class="text-center">${toPercent(avg.c)}</td></tr>`;
+    }
+
+    function renderProductTable() {
+        const tbody = els.productTableBody;
+        tbody.innerHTML = '';
+        if(currentDisplayData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-5">无符合筛选条件的数据</td></tr>';
+            return;
+        }
+
+        const displayLimit = 500;
+        const dataToShow = currentDisplayData.slice(0, displayLimit);
+
+        dataToShow.forEach(p => {
+            const isHigh = p.returnRate >= 0.5;
+            tbody.innerHTML += `
+                <tr>
+                    <td class="text-muted small">${p.shopName}</td>
+                    <td class="text-center font-monospace small">${p.productId}</td>
+                    <td title="${p.productName}">${truncateStr(p.productName, 40)}</td>
+                    <td class="text-center">${p.totalOrders}</td>
+                    <td class="text-center">${p.returnCount}</td>
+                    <td class="text-center fw-bold ${isHigh ? 'text-danger' : ''}">${toPercent(p.returnRate)}</td>
+                    <td class="text-center">${isHigh ? '<span class="badge bg-danger">高风险</span>' : '<span class="badge bg-light text-secondary border">正常</span>'}</td>
+                </tr>`;
+        });
+        
+        if (currentDisplayData.length > displayLimit) {
+            tbody.innerHTML += `<tr><td colspan="7" class="text-center text-muted small">... 仅显示前 ${displayLimit} 条 (共 ${currentDisplayData.length} 条)，请导出查看全部 ...</td></tr>`;
+        }
+    }
+
+    function updateShopFilter() {
+        const select = els.filterShop;
+        select.innerHTML = '<option value="all">所有店铺</option>';
+        [...new Set(globalProductResults.map(p => p.shopName))].sort().forEach(s => {
+            select.innerHTML += `<option value="${s}">${s}</option>`;
+        });
+    }
+
+    function getBadgeClass(val, threshold, type='red') {
+        if (val >= threshold) return type === 'red' ? 'badge-soft-danger' : 'badge-soft-warning';
+        return 'badge-soft-primary';
+    }
+    function updateProgress(val, text) { 
+        els.progressBar.style.width = val + '%'; 
+        els.progressPercent.innerText = val + '%';
+        if(text) els.progressText.innerText = text; 
+    }
+    function addLog(src, status, msg) { 
+        const row = `<tr><td class="log-time">${new Date().toLocaleTimeString()}</td><td><span class="badge bg-light text-dark border">${status}</span></td><td>${msg}</td></tr>`;
+        els.logTableBody.insertAdjacentHTML('beforeend', row);
+    }
+    function clearLogs() { els.logTableBody.innerHTML = ''; }
+    function toPercent(num) { return (num * 100).toFixed(2) + '%'; }
+    function truncateStr(str, n) { return (str.length > n) ? str.substr(0, n-1) + '...' : str; }
+
+</script>
+</body>
+</html>
