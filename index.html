@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>店铺退货率查询</title>
-    
+
     <!-- 添加网站图标 (Favicon) -->
     <link rel="icon" type="image/x-icon" href="https://sakuramia.icu/img/author_small.ico">
     <!-- 1. 国内高速源加载 CSS -->
     <link href="https://cdn.staticfile.org/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <!-- 引入图标库 -->
     <link href="https://cdn.staticfile.org/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
-    
+
     <style>
         :root {
             --primary-bg: #f3f5f9;
@@ -21,14 +21,14 @@
         }
 
         /* --- 背景与全局布局 --- */
-        body { 
-            background: url('https://wmimg.com/i/37/2025/11/692565dea2d57.jpg') no-repeat center center fixed; 
+        body {
+            background: url('https://wmimg.com/i/37/2025/11/692565dea2d57.jpg') no-repeat center center fixed;
             background-color: #a3b6ee;
             background-size: cover;
-            font-family: "Segoe UI", "Microsoft YaHei", sans-serif; 
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
             color: #444;
             min-height: 100vh;
-            overflow-y: hidden; 
+            overflow-y: hidden;
         }
 
         .main-scroller {
@@ -40,13 +40,13 @@
         .container-fluid { max-width: 1600px; padding: 0; }
 
         /* --- 毛玻璃卡片风格 --- */
-        .card { 
-            border: none; 
-            border-radius: var(--card-border-radius); 
+        .card {
+            border: none;
+            border-radius: var(--card-border-radius);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             margin-bottom: 25px;
             background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px); 
+            backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             transition: transform 0.2s;
         }
@@ -90,7 +90,7 @@
         }
         .upload-zone i { font-size: 2.5rem; color: #4e73df; margin-bottom: 10px; }
         .upload-zone p { margin: 0; font-weight: 600; color: #5a5c69; }
-        
+
         /* 关键修改：Input 仍然覆盖，但主要用于点击 */
         #fileInput {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -110,24 +110,24 @@
         .btn-success-custom:hover:not(:disabled) { background-color: #17a673; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(28, 200, 138, 0.4); }
 
         /* --- 表格样式 --- */
-        .table-container { 
-            border-radius: 8px; 
+        .table-container {
+            border-radius: 8px;
             border: 1px solid #e3e6f0;
-            height: 65vh; 
-            overflow-y: auto; 
+            height: 65vh;
+            overflow-y: auto;
             background-color: rgba(255, 255, 255, 0.95);
             scrollbar-width: thin;
             scrollbar-color: #b7b9cc #f8f9fc;
         }
-        
+
         .table-container::-webkit-scrollbar { width: 8px; height: 8px; }
         .table-container::-webkit-scrollbar-track { background: #f8f9fc; }
         .table-container::-webkit-scrollbar-thumb { background-color: #b7b9cc; border-radius: 4px; }
-        
+
         .table thead th {
-            position: sticky; 
-            top: 0; 
-            background-color: #f1f3f9; 
+            position: sticky;
+            top: 0;
+            background-color: #f1f3f9;
             color: #4e73df;
             z-index: 10;
             font-weight: 700;
@@ -138,18 +138,18 @@
             padding: 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        
+
         .table tbody td { padding: 12px 15px; vertical-align: middle; border-color: #e3e6f0; font-size: 0.9rem; }
         .table-hover tbody tr:hover { background-color: rgba(78, 115, 223, 0.1); }
 
         /* --- 其他组件 --- */
         .filter-label { font-size: 0.85rem; font-weight: 700; color: #666; margin-bottom: 5px; display: block; }
         .input-group-text { background-color: rgba(248, 249, 252, 0.8); }
-        
+
         .badge-soft-danger { background-color: #ffeaea; color: #e74a3b; border: 1px solid #ffc5c5; }
         .badge-soft-warning { background-color: #fff8e1; color: #f6c23e; border: 1px solid #ffeeba; }
         .badge-soft-primary { background-color: #e8f0fe; color: #4e73df; border: 1px solid #b7cefc; }
-        
+
         .progress { height: 10px; border-radius: 5px; background-color: #eaecf4; }
         .progress-bar { background-color: var(--brand-color); border-radius: 5px; }
 
@@ -167,7 +167,7 @@
 
 <div class="main-scroller">
     <div class="container-fluid">
-        
+
         <!-- 顶部 Header -->
         <div class="header-section">
             <div class="header-title">
@@ -175,7 +175,8 @@
                 <p>批量解析店铺数据，识别高退货率商品</p>
             </div>
             <div>
-                <span class="badge bg-white text-primary p-2 shadow-sm" id="versionBadge"><i class="bi bi-magic me-1"></i>Web版</span>
+                <span class="badge bg-white text-primary p-2 shadow-sm" id="versionBadge"><i
+                        class="bi bi-magic me-1"></i>Web版</span>
             </div>
         </div>
 
@@ -186,10 +187,10 @@
                 <div class="card">
                     <div class="card-body">
                         <h6 class="filter-label"><i class="bi bi-folder2-open me-1"></i>数据导入</h6>
-                        
+
                         <!-- 修改后的上传区域 -->
                         <div class="upload-zone shadow-sm" id="dropZone">
-                            <!-- 
+                            <!--
                                 关键修改：
                                 1. 移除了 webkitdirectory 和 directory 属性
                                 2. 添加了 accept=".csv"
@@ -198,9 +199,10 @@
                             <input type="file" id="fileInput" multiple accept=".csv">
                             <i class="bi bi-cloud-arrow-up-fill"></i>
                             <p id="fileLabel">点击或将CSV文件拖拽至此</p>
-                            <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">支持单文件或多文件批量上传</small>
+                            <small class="text-muted d-block mt-1"
+                                   style="font-size: 0.75rem;">支持单文件或多文件批量上传</small>
                         </div>
-                        
+
                         <div class="mt-4">
                             <div class="d-grid gap-2">
                                 <button id="btnAnalyze" class="btn btn-custom btn-primary-custom" disabled>
@@ -219,10 +221,13 @@
                                 <small class="text-muted" id="progressPercent">0%</small>
                             </div>
                             <div class="progress">
-                                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                                     role="progressbar" style="width: 0%"></div>
                             </div>
-                            <div id="progressText" class="text-center text-muted small mt-2 text-truncate">等待就绪...</div>
-                            <div id="resourceStatus" class="text-center small text-danger mt-1 fw-bold" style="display:none;"></div>
+                            <div id="progressText" class="text-center text-muted small mt-2 text-truncate">等待就绪...
+                            </div>
+                            <div id="resourceStatus" class="text-center small text-danger mt-1 fw-bold"
+                                 style="display:none;"></div>
                         </div>
                     </div>
                 </div>
@@ -231,7 +236,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h6 class="filter-label"><i class="bi bi-funnel-fill me-1"></i>数据筛选</h6>
-                        
+
                         <div class="mb-3">
                             <label class="small text-muted mb-1">店铺选择</label>
                             <select id="filterShop" class="form-select form-select-sm">
@@ -242,9 +247,11 @@
                         <div class="mb-3">
                             <label class="small text-muted mb-1">退货率范围 (%)</label>
                             <div class="input-group input-group-sm">
-                                <input type="number" id="filterRateMin" class="form-control input-mini" value="0" min="0" max="100">
+                                <input type="number" id="filterRateMin" class="form-control input-mini" value="0"
+                                       min="0" max="100">
                                 <span class="input-group-text border-start-0 border-end-0">-</span>
-                                <input type="number" id="filterRateMax" class="form-control input-mini" value="100" min="0" max="100">
+                                <input type="number" id="filterRateMax" class="form-control input-mini" value="100"
+                                       min="0" max="100">
                             </div>
                         </div>
 
@@ -261,9 +268,10 @@
                                 <i class="bi bi-check-lg"></i> 应用筛选条件
                             </button>
                         </div>
-                        
+
                         <div class="text-center mt-2">
-                            <small class="text-muted" id="filterStatusText" style="font-size: 0.75rem;">当前: 显示所有数据</small>
+                            <small class="text-muted" id="filterStatusText" style="font-size: 0.75rem;">当前:
+                                显示所有数据</small>
                         </div>
                     </div>
                 </div>
@@ -275,17 +283,20 @@
                     <div class="card-body p-0">
                         <ul class="nav nav-tabs px-3 pt-3" id="resultTabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="shop-tab" data-bs-toggle="tab" data-bs-target="#shop-pane" type="button">
+                                <button class="nav-link active" id="shop-tab" data-bs-toggle="tab"
+                                        data-bs-target="#shop-pane" type="button">
                                     <i class="bi bi-shop me-1"></i>店铺统计
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="product-tab" data-bs-toggle="tab" data-bs-target="#product-pane" type="button">
+                                <button class="nav-link" id="product-tab" data-bs-toggle="tab"
+                                        data-bs-target="#product-pane" type="button">
                                     <i class="bi bi-box-seam me-1"></i>商品明细
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="log-tab" data-bs-toggle="tab" data-bs-target="#log-pane" type="button">
+                                <button class="nav-link" id="log-tab" data-bs-toggle="tab" data-bs-target="#log-pane"
+                                        type="button">
                                     <i class="bi bi-terminal me-1"></i>系统日志
                                 </button>
                             </li>
@@ -296,9 +307,19 @@
                             <div class="tab-pane fade show active" id="shop-pane">
                                 <div class="table-container">
                                     <table class="table table-hover mb-0" id="shopTable">
-                                        <thead><tr><th>店铺名称</th><th class="text-center">退货取消率</th><th class="text-center">退货率</th><th class="text-center">取消率</th></tr></thead>
+                                        <thead>
+                                        <tr>
+                                            <th>店铺名称</th>
+                                            <th class="text-center">退货取消率</th>
+                                            <th class="text-center">退货率</th>
+                                            <th class="text-center">取消率</th>
+                                        </tr>
+                                        </thead>
                                         <tbody>
-                                            <tr><td colspan="4" class="text-center text-muted py-5">请先导入数据并开始分析</td></tr>
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-5">请先导入数据并开始分析
+                                            </td>
+                                        </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -309,18 +330,20 @@
                                 <div class="table-container">
                                     <table class="table table-hover mb-0" id="productTable">
                                         <thead>
-                                            <tr>
-                                                <th>店铺名称</th>
-                                                <th class="text-center">商品ID</th>
-                                                <th>商品名称</th>
-                                                <th class="text-center">订单数</th>
-                                                <th class="text-center">退货数</th>
-                                                <th class="text-center">退货率</th>
-                                                <th class="text-center">风险标记</th>
-                                            </tr>
+                                        <tr>
+                                            <th>店铺名称</th>
+                                            <th class="text-center">商品ID</th>
+                                            <th>商品名称</th>
+                                            <th class="text-center">订单数</th>
+                                            <th class="text-center">退货数</th>
+                                            <th class="text-center">退货率</th>
+                                            <th class="text-center">风险标记</th>
+                                        </tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td colspan="7" class="text-center text-muted py-5">暂无数据</td></tr>
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-5">暂无数据</td>
+                                        </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -329,11 +352,19 @@
                             <!-- 日志表格 -->
                             <div class="tab-pane fade" id="log-pane">
                                 <div class="d-flex justify-content-end mb-2">
-                                    <button class="btn btn-sm btn-light border" onclick="clearLogs()"><i class="bi bi-trash"></i> 清空</button>
+                                    <button class="btn btn-sm btn-light border" onclick="clearLogs()"><i
+                                            class="bi bi-trash"></i> 清空
+                                    </button>
                                 </div>
                                 <div class="table-container" style="height: 400px;">
                                     <table class="table table-sm table-striped mb-0" id="logTable">
-                                        <thead><tr><th style="width:120px">时间</th><th style="width:100px">状态</th><th>详情</th></tr></thead>
+                                        <thead>
+                                        <tr>
+                                            <th style="width:120px">时间</th>
+                                            <th style="width:100px">状态</th>
+                                            <th>详情</th>
+                                        </tr>
+                                        </thead>
                                         <tbody></tbody>
                                     </table>
                                 </div>
@@ -378,8 +409,8 @@
 
     // 数据存储
     let globalShopResults = [];
-    let globalProductResults = []; 
-    let currentDisplayData = [];   
+    let globalProductResults = [];
+    let currentDisplayData = [];
     let selectedFiles = [];
 
     // UI 引用
@@ -407,7 +438,7 @@
     function handleFileSelection(fileList) {
         // 过滤非 CSV 文件
         selectedFiles = Array.from(fileList).filter(f => f.name.toLowerCase().endsWith('.csv'));
-        
+
         if (selectedFiles.length > 0) {
             els.btnAnalyze.disabled = false;
             els.fileLabel.innerHTML = `<strong>已就绪!</strong> 选中 ${selectedFiles.length} 个 CSV 文件`;
@@ -452,7 +483,7 @@
         const dt = e.dataTransfer;
         const files = dt.files;
         handleFileSelection(files);
-        
+
         // 兼容处理：如果是文件输入框本身的change事件没触发，这里手动赋值有点复杂
         // 所以我们主要依赖 selectedFiles 这个变量来存储，而不是 input.files
     }, false);
@@ -466,13 +497,13 @@
     async function startAnalysis() {
         els.btnAnalyze.disabled = true;
         els.btnExport.disabled = true;
-        
+
         globalShopResults = [];
         globalProductResults = [];
         currentDisplayData = [];
         els.shopTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-5"><div class="spinner-border text-primary"></div><div class="mt-2">正在分析数据...</div></td></tr>';
         els.productTableBody.innerHTML = '';
-        
+
         let processedCount = 0;
         let errorCount = 0;
 
@@ -497,16 +528,16 @@
         updateProgress(100, `处理完成! 成功 ${processedCount}, 失败 ${errorCount}`);
         els.btnAnalyze.disabled = false;
         els.btnExport.disabled = false;
-        
+
         addLog('分析', '完成', `生成 ${globalShopResults.length} 条店铺记录`);
 
         currentDisplayData = [...globalProductResults];
         currentDisplayData.sort((a, b) => b.returnRate - a.returnRate);
-        
+
         renderShopTable();
         updateShopFilter();
         renderProductTable();
-        
+
         els.filterStatusText.innerText = `当前: 显示所有数据 (${currentDisplayData.length} 条)`;
     }
 
@@ -528,10 +559,10 @@
 
         currentDisplayData.sort((a, b) => b.returnRate - a.returnRate);
         renderProductTable();
-        
+
         addLog('筛选', '应用', `退货率 ${minRate}-${maxRate}%, 订单≥${filterOrdersInput}, 结果: ${currentDisplayData.length} 条`);
         els.filterStatusText.innerText = `当前: 筛选后数据 (${currentDisplayData.length} 条)`;
-        
+
         const triggerEl = document.querySelector('#resultTabs button[data-bs-target="#product-pane"]');
         bootstrap.Tab.getInstance(triggerEl).show();
     }
@@ -553,7 +584,7 @@
             }));
             shopData.sort((a, b) => b["退货率"] - a["退货率"]);
             const wsShop = XLSX.utils.json_to_sheet(shopData);
-            
+
             wsShop['!cols'] = [{wch: 35}, {wch: 15}, {wch: 15}, {wch: 15}];
             formatPercentColumn(wsShop, [1, 2, 3]);
             XLSX.utils.book_append_sheet(wb, wsShop, "店铺统计");
@@ -570,7 +601,7 @@
 
                 for (const [shopName, products] of Object.entries(shopGroups)) {
                     products.sort((a, b) => b.returnRate - a.returnRate);
-                    
+
                     const productData = products.map(p => ({
                         "商品ID": p.productId,
                         "商品名称": p.productName,
@@ -581,9 +612,20 @@
 
                     const wsProd = XLSX.utils.json_to_sheet(productData, { origin: "A2" });
                     XLSX.utils.sheet_add_aoa(wsProd, [[shopName]], { origin: "A1" });
+
+                    // [修复]：遍历第一列（商品ID），强制设置为纯文本格式，防止复制出现空字符串或科学计数法
+                    const range = XLSX.utils.decode_range(wsProd['!ref']);
+                    for (let R = 2; R <= range.e.r; ++R) { // 数据从第3行开始(Index 2)
+                        const cellRef = XLSX.utils.encode_cell({ r: R, c: 0 }); // Column 0 是商品ID
+                        if (wsProd[cellRef]) {
+                            wsProd[cellRef].t = 's'; // set type to string
+                            wsProd[cellRef].v = String(wsProd[cellRef].v).trim(); // trim spaces
+                        }
+                    }
+
                     if(!wsProd['!merges']) wsProd['!merges'] = [];
                     wsProd['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } });
-                    wsProd['!cols'] = [{wch: 18}, {wch: 60}, {wch: 12}, {wch: 12}, {wch: 12}];
+                    wsProd['!cols'] = [{wch: 22}, {wch: 60}, {wch: 12}, {wch: 12}, {wch: 12}]; // 稍微加宽ID列
                     formatPercentColumn(wsProd, [4], 2);
 
                     let sheetName = shopName.replace(/[\\/*?:[\]]/g, '').substring(0, 31);
@@ -662,7 +704,9 @@
 
         const prodMap = {};
         validRows.forEach(r => {
-            const pid = (r['商品id'] || '').replace(/^'|'$/g, '');
+            // [修复]：更彻底的清洗 ID，去除空格、制表符和引号
+            const pid = String(r['商品id'] || '').replace(/^['"\t\s]+|['"\t\s]+$/g, '').trim();
+
             if (!prodMap[pid]) prodMap[pid] = { pid, name: r['商品'] || '未知', total: 0, ret: 0 };
             prodMap[pid].total++;
             if (['退款成功', '售后处理中'].includes(r['售后状态'])) prodMap[pid].ret++;
@@ -698,7 +742,7 @@
                     <td class="text-center"><span class="badge ${getBadgeClass(s.cancelRate, 0.05, 'blue')}">${toPercent(s.cancelRate)}</span></td>
                 </tr>`;
         });
-        
+
         const avg = { rc: sums.rc/globalShopResults.length, r: sums.r/globalShopResults.length, c: sums.c/globalShopResults.length };
         tbody.innerHTML += `<tr class="table-light fw-bold"><td>平均数据</td><td class="text-center">${toPercent(avg.rc)}</td><td class="text-center">${toPercent(avg.r)}</td><td class="text-center">${toPercent(avg.c)}</td></tr>`;
     }
@@ -727,7 +771,7 @@
                     <td class="text-center">${isHigh ? '<span class="badge bg-danger">高风险</span>' : '<span class="badge bg-light text-secondary border">正常</span>'}</td>
                 </tr>`;
         });
-        
+
         if (currentDisplayData.length > displayLimit) {
             tbody.innerHTML += `<tr><td colspan="7" class="text-center text-muted small">... 仅显示前 ${displayLimit} 条 (共 ${currentDisplayData.length} 条)，请导出查看全部 ...</td></tr>`;
         }
@@ -745,12 +789,12 @@
         if (val >= threshold) return type === 'red' ? 'badge-soft-danger' : 'badge-soft-warning';
         return 'badge-soft-primary';
     }
-    function updateProgress(val, text) { 
-        els.progressBar.style.width = val + '%'; 
+    function updateProgress(val, text) {
+        els.progressBar.style.width = val + '%';
         els.progressPercent.innerText = val + '%';
-        if(text) els.progressText.innerText = text; 
+        if(text) els.progressText.innerText = text;
     }
-    function addLog(src, status, msg) { 
+    function addLog(src, status, msg) {
         const row = `<tr><td class="log-time">${new Date().toLocaleTimeString()}</td><td><span class="badge bg-light text-dark border">${status}</span></td><td>${msg}</td></tr>`;
         els.logTableBody.insertAdjacentHTML('beforeend', row);
     }
